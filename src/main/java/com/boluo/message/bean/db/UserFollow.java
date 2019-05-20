@@ -7,6 +7,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * 用户关系Model
+ */
 @Entity
 @Table(name = "TB_USER_FOLLOW")
 public class UserFollow {
@@ -16,18 +19,24 @@ public class UserFollow {
     @GenericGenerator(name = "uuid", strategy = "uuid2")
     @Column(updatable = false, nullable = false)
     private String id;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "originId")
     private User origin;
+
     @Column(nullable = false, updatable = false, insertable = false)
     private String originId;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "targetId")
     private User target;
+
     @Column(nullable = false, updatable = false, insertable = false)
     private String targetId;
+
     @Column
     private String alias;
+
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime createAt = LocalDateTime.now();

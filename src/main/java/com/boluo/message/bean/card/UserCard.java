@@ -1,8 +1,8 @@
 package com.boluo.message.bean.card;
 
 import com.boluo.message.bean.db.User;
-import com.google.gson.annotations.Expose;
 import com.boluo.message.utils.Hib;
+import com.google.gson.annotations.Expose;
 
 import java.time.LocalDateTime;
 
@@ -50,7 +50,7 @@ public class UserCard {
         this.desc = user.getDescription();
         this.sex = user.getSex();
         this.modifyAt = user.getUpdateAt();
-        // user.getFollowers().size()
+//         this.user.getFollowers().size();
         // 懒加载会报错，因为没有Session
         Hib.queryOnly(session -> {
             session.load(user, user.getId());

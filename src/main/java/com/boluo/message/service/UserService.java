@@ -5,14 +5,14 @@ import com.boluo.message.bean.api.user.UpdateInfoModel;
 import com.boluo.message.bean.card.UserCard;
 import com.boluo.message.bean.db.User;
 import com.boluo.message.factory.UserFactory;
-import org.hibernate.sql.Update;
+import com.google.common.base.Strings;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-@Path("user")
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Path("/user")
 public class UserService extends BaseService {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
@@ -26,5 +26,81 @@ public class UserService extends BaseService {
         self = UserFactory.update(self);
         UserCard userCard = new UserCard(self);
         return ResponseModel.buildOk(userCard);
+    }
+
+    /**
+     * 拉取联系人
+     * @return
+     */
+    @GET
+    @Path("/contact")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public ResponseModel<List<UserCard>> contact(){
+        User self = getSelf();
+        List<User> users = UserFactory.contacts(self);
+        // map操作，相当于转置操作，User->UserCard
+        List<UserCard> userCards = users.stream()
+                .map(user -> new UserCard(user, true))
+                .collect(Collectors.toList());
+
+//        List<UserCard> userCards = new ArrayList<>();
+//        for (User user : users) {
+//            UserCard userCard = new UserCard(user, true);
+//            userCards.add(userCard);
+//        }
+        return ResponseModel.buildOk(userCards);
+    }
+
+    /**
+     * 关注人
+     * @return
+     */
+    @PUT
+    @Path("/follow/{followId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<UserCard> follow(@PathParam("followId") String followId){
+        User self = getSelf();
+        //不能自己关注自己
+        if (followId.equalsIgnoreCase(self.getId())
+                || Strings.isNullOrEmpty(followId)){
+            return ResponseModel.buildParameterError();
+        }
+
+        User followUser = UserFactory.findById(followId);
+        if (followUser == null){
+            return ResponseModel.buildNotFoundUserError(followId);
+        }
+        followUser = UserFactory.follow(self, followUser, null);
+        if (followUser == null){
+            return ResponseModel.buildServiceError();
+        }
+        return ResponseModel.buildOk(new UserCard(followUser, true));
+    }
+
+    /**
+     * 按名字搜索人
+     * @return
+     */
+    @GET
+    @Path("/search/{name:(.*)?}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<List<UserCard>> search(@DefaultValue("") @PathParam("name") String name){
+        User self = getSelf();
+        List<User> searchUsers = UserFactory.search(name);
+        List<User> contacts = UserFactory.contacts(self);
+
+        List<UserCard> userCards = searchUsers.stream()
+                .map(user -> {
+                    boolean isFollow = user.getId().equalsIgnoreCase(self.getId()) // 进行联系人的任意匹配，匹配其中的Id字段
+                            || contacts.stream().anyMatch(
+                            contactUser -> contactUser.getId()
+                                    .equalsIgnoreCase(user.getId())
+                    );
+                    return new UserCard(user, isFollow);
+                }).collect(Collectors.toList());
+        return ResponseModel.buildOk(userCards);
     }
 }

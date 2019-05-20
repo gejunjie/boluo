@@ -1,13 +1,16 @@
 package com.boluo.message.factory;
 
 import com.boluo.message.bean.db.User;
-import com.google.common.base.Strings;
-import org.hibernate.Session;
+import com.boluo.message.bean.db.UserFollow;
 import com.boluo.message.utils.Hib;
 import com.boluo.message.utils.TextUtil;
+import com.google.common.base.Strings;
+import org.hibernate.Session;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class UserFactory {
     // 通过Token字段查询用户信息
@@ -160,4 +163,80 @@ public class UserFactory {
         return TextUtil.encodeBase64(password);
     }
 
+    /**
+     * 获取联系人列表
+     * @param self
+     * @return
+     */
+    public static List<User> contacts(User self) {
+        return Hib.query(session -> {
+            session.load(self, self.getId());
+            Set<UserFollow> follows = self.getFollowers();
+            return follows.stream()
+                    .map(UserFollow::getTarget)
+                    .collect(Collectors.toList());
+        });
+    }
+
+    public static User follow(final User origin, final User target, final String alias) {
+        UserFollow userFollow = getUserFollow(origin, target);
+        if (userFollow != null){
+            return userFollow.getTarget();
+        }
+        return Hib.query(session -> {
+            // 想要操作懒加载的数据，需要重新load一次
+            session.load(origin, origin.getId());
+            session.load(target, target.getId());
+
+            // 我关注人的时候，同时他也关注我，
+            // 所有需要添加两条UserFollow数据
+            UserFollow originFollow = new UserFollow();
+            originFollow.setOrigin(origin);
+            originFollow.setTarget(target);
+            // 备注是我对他的备注，他对我默认没有备注
+            originFollow.setAlias(alias);
+
+            // 发起者是他，我是被关注的人的记录
+            UserFollow targetFollow = new UserFollow();
+            targetFollow.setOrigin(target);
+            targetFollow.setTarget(origin);
+
+            // 保存数据库
+            session.save(originFollow);
+            session.save(targetFollow);
+
+            return target;
+        });
+    }
+
+    /**
+     * 查询两个人是否已经关注
+     *
+     * @param origin 发起者
+     * @param target 被关注人
+     * @return 返回中间类UserFollow
+     */
+    public static UserFollow getUserFollow(final User origin, final User target) {
+        return Hib.query(session -> (UserFollow) session
+                .createQuery("from UserFollow where originId = :originId and targetId = :targetId")
+                .setParameter("originId", origin.getId())
+                .setParameter("targetId", target.getId())
+                .setMaxResults(1)
+                // 唯一查询返回
+                .uniqueResult());
+    }
+
+    /**
+     * 查询联系人
+     * @param name
+     * @return
+     */
+    public static List<User> search(String name) {
+        if (Strings.isNullOrEmpty(name)) name = "";
+        final String searchName = "%" + name + "%";
+        return Hib.query(session -> (List<User>) session.createQuery("from User where lower(name) like :name and portrait is not null and description is not null")
+                .setParameter("name", searchName)
+                .setMaxResults(20) // 至多20条
+                .list());
+    }
 }
