@@ -14,7 +14,6 @@
 
         <!--<property name="connection.url">jdbc:mysql://qiujuer.net:6968/DB_I_T_PUSH?serverTimezone=UTC&amp;useUnicode=true&amp;characterEncoding=utf8&amp;useSSL=false</property>-->
 
-
         <!-- JDBC 链接池大小 -->
         <property name="connection.pool_size">5</property>
 
@@ -60,15 +59,12 @@
                  class="com.boluo.message.bean.db.User"/>
         <mapping package="com.boluo.message.bean.db"
                  class="com.boluo.message.bean.db.UserFollow"/>
-
         <mapping package="com.boluo.message.bean.db"
                  class="com.boluo.message.bean.db.Group"/>
         <mapping package="com.boluo.message.bean.db"
                  class="com.boluo.message.bean.db.GroupMember"/>
-
         <mapping package="com.boluo.message.bean.db"
                  class="com.boluo.message.bean.db.Message"/>
-
         <mapping package="com.boluo.message.bean.db"
                  class="com.boluo.message.bean.db.PushHistory"/>
         <mapping package="com.boluo.message.bean.db"

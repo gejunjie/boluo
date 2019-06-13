@@ -2,11 +2,10 @@ package com.boluo.message.bean.db;
 
 import org.hibernate.annotations.*;
 
-import javax.persistence.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import javax.security.auth.Subject;
+import javax.persistence.*;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -62,7 +61,7 @@ public class User implements Principal {
     @Column(nullable = false)
     private LocalDateTime createAt = LocalDateTime.now();
 
-    // 定义为更新时间戳，在创建时就已经写入
+    // 定义为更新时间戳，在创建时就已经写入tb_message
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updateAt = LocalDateTime.now();
@@ -70,8 +69,6 @@ public class User implements Principal {
     // 最后一次收到消息的时间
     @Column
     private LocalDateTime lastReceivedAt = LocalDateTime.now();
-
-
     // 我关注的人的列表方法
     // 对应的数据库表字段为TB_USER_FOLLOW.originId
     @JoinColumn(name = "originId")
@@ -80,7 +77,6 @@ public class User implements Principal {
     // 1对多，一个用户可以有很多关注人，每一次关注都是一个记录
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<UserFollow> following = new HashSet<>();
-
 
     // 关注我的人的列表
     // 对应的数据库表字段为TB_USER_FOLLOW.targetId

@@ -80,7 +80,7 @@ public class UserService extends BaseService {
     }
 
     /**
-     * 按名字搜索人
+     * 按名字搜索联系人
      * @return
      */
     @GET
@@ -102,5 +102,30 @@ public class UserService extends BaseService {
                     return new UserCard(user, isFollow);
                 }).collect(Collectors.toList());
         return ResponseModel.buildOk(userCards);
+    }
+
+    // 获取某人的信息
+    @GET
+    @Path("{id}") // http://127.0.0.1/api/user/{id}
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<UserCard> getUser(@PathParam("id") String id) {
+        if (Strings.isNullOrEmpty(id)) {
+            // 返回参数异常
+            return ResponseModel.buildParameterError();
+        }
+        User self = getSelf();
+        if (self.getId().equalsIgnoreCase(id)) {
+            // 返回自己，不必查询数据库
+            return ResponseModel.buildOk(new UserCard(self, true));
+        }
+        User user = UserFactory.findById(id);
+        if (user == null) {
+            // 没找到，返回没找到用户
+            return ResponseModel.buildNotFoundUserError(null);
+        }
+        // 如果我们直接有关注的记录，则我已关注需要查询信息的用户
+        boolean isFollow = UserFactory.getUserFollow(self, user) != null;
+        return ResponseModel.buildOk(new UserCard(user, isFollow));
     }
 }

@@ -27,6 +27,7 @@ public class MessageFactory {
     public static Message save(Message message){
         return Hib.query(session -> {
             session.save(message);
+            // 写入到数据库
             session.flush();
             session.refresh(message);
             return message;

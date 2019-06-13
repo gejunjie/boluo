@@ -13,10 +13,11 @@ import com.boluo.message.factory.UserFactory;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.awt.*;
 
+@Path("/msg")
 public class MessageService extends BaseService {
     // 发送一条消息到服务器
     @POST
@@ -41,7 +42,7 @@ public class MessageService extends BaseService {
 
     //发送给人
     private ResponseModel<MessageCard> pushToUser(User sender, MessageCreateModel model) {
-        User receiver = UserFactory.findById(model.getId());
+        User receiver = UserFactory.findById(model.getReceiverId());
         if (receiver == null){
             return ResponseModel.buildNotFoundUserError("receiver not exist");
         }

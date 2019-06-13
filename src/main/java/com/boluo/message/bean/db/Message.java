@@ -20,6 +20,8 @@ public class Message {
     public static final int TYPE_PIC = 2; // 图片类型
     public static final int TYPE_FILE = 3; // 文件类型
     public static final int TYPE_AUDIO = 4; // 语音类型
+
+    // 这是一个主键
     @Id
     @PrimaryKeyJoinColumn
     // 主键生成存储的类型为UUID
@@ -27,35 +29,57 @@ public class Message {
     // 避免复杂的服务器和客户端的映射关系
     //@GeneratedValue(generator = "uuid")
     // 把uuid的生成器定义为uuid2，uuid2是常规的UUID toString
-    @GenericGenerator(name = "uuid",strategy = "uuid2")
+    @GenericGenerator(name = "uuid", strategy = "uuid2")
+    // 不允许更改，不允许为null
     @Column(updatable = false, nullable = false)
     private String id;
+
+    // 内容不允许为空，类型为text
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    // 附件
     @Column
     private String attach;
+
+    // 消息类型
     @Column(nullable = false)
     private int type;
+
+    // 定义为创建时间戳，在创建时就已经写入
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime createAt = LocalDateTime.now();
+
+    // 定义为更新时间戳，在创建时就已经写入
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updateAt = LocalDateTime.now();
-    @ManyToOne(optional = false)
+
+    // 发送者 不为空
+    // 多个消息对应一个发送者
     @JoinColumn(name = "senderId")
+    @ManyToOne(optional = false)
     private User sender;
+
+    // 这个字段仅仅只是为了对应sender的数据库字段senderId
+    // 不允许手动的更新或者插入
     @Column(nullable = false, updatable = false, insertable = false)
     private String senderId;
+
+    // 接收者 可为空
+    // 多个消息对应一个接收者
     @ManyToOne
     @JoinColumn(name = "receiverId")
     private User receiver;
-    @Column(nullable = false, updatable = false, insertable = false)
+    @Column(updatable = false, insertable = false)
     private String receiverId;
+
+    // 一个群可以接收多个消息
     @ManyToOne
     @JoinColumn(name = "groupId")
     private Group group;
-    @Column(nullable = false, updatable = false, insertable = false)
+    @Column(updatable = false, insertable = false)
     private String groupId;
 
     // 普通朋友的发送的构造函数
@@ -64,7 +88,6 @@ public class Message {
         this.content = model.getContent();
         this.attach = model.getAttach();
         this.type = model.getType();
-
         this.sender = sender;
         this.receiver = receiver;
     }
@@ -75,9 +98,11 @@ public class Message {
         this.content = model.getContent();
         this.attach = model.getAttach();
         this.type = model.getType();
-
         this.sender = sender;
         this.group = group;
+    }
+
+    public Message() {
     }
 
     public String getId() {

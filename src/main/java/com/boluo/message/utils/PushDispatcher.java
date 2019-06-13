@@ -17,9 +17,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class PushDispatcher {
-    private static final String appId = "Rr51sROK4B8FXbq0TUjAF5";
-    private static final String appKey = "eurxTdqHECAKgc7s4xtUe9";
-    private static final String masterSecret = "2zqRh5hMIY93LBqVlBtsi";
+    private static final String appId = "Whh1CYPnM165RCPKomsQH3";
+    private static final String appKey = "4bxoWKuOmy87sqwMRGEhhA";
+    private static final String masterSecret = "ohwaK4s4hV8DyOcJR3i0h3";
     private static final String host = "http://sdk.open.api.igexin.com/apiex.htm";
 
     private final IGtPush pusher;
@@ -121,7 +121,5 @@ public class PushDispatcher {
         Logger.getLogger("PushDispatcher")
                 .log(Level.WARNING, "推送服务器响应异常！！！");
         return false;
-
     }
-
 }
