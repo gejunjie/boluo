@@ -14,6 +14,12 @@ import java.util.stream.Collectors;
 
 @Path("/user")
 public class UserService extends BaseService {
+    /**
+     * 用户信息修改接口
+     * 返回自己的个人信息
+     * @param model
+     * @return
+     */
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -53,7 +59,7 @@ public class UserService extends BaseService {
     }
 
     /**
-     * 关注人
+     * 添加好友
      * @return
      */
     @PUT
@@ -62,7 +68,7 @@ public class UserService extends BaseService {
     @Produces(MediaType.APPLICATION_JSON)
     public ResponseModel<UserCard> follow(@PathParam("followId") String followId){
         User self = getSelf();
-        //不能自己关注自己
+        //不能添加自己
         if (followId.equalsIgnoreCase(self.getId())
                 || Strings.isNullOrEmpty(followId)){
             return ResponseModel.buildParameterError();
@@ -104,14 +110,15 @@ public class UserService extends BaseService {
         return ResponseModel.buildOk(userCards);
     }
 
-    // 获取某人的信息
+    /**
+     *  获取某人的信息
+     */
     @GET
     @Path("{id}") // http://127.0.0.1/api/user/{id}
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ResponseModel<UserCard> getUser(@PathParam("id") String id) {
         if (Strings.isNullOrEmpty(id)) {
-            // 返回参数异常
             return ResponseModel.buildParameterError();
         }
         User self = getSelf();
@@ -120,8 +127,7 @@ public class UserService extends BaseService {
             return ResponseModel.buildOk(new UserCard(self, true));
         }
         User user = UserFactory.findById(id);
-        if (user == null) {
-            // 没找到，返回没找到用户
+        if (user == null){
             return ResponseModel.buildNotFoundUserError(null);
         }
         // 如果我们直接有关注的记录，则我已关注需要查询信息的用户

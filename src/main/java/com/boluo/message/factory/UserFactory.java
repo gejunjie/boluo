@@ -81,6 +81,13 @@ public class UserFactory {
         return user;
     }
 
+    /**
+     * 创建账户
+     * @param account 账户
+     * @param password 密码
+     * @param name 名字
+     * @return
+     */
     private static User createUser(String account, String password, String name) {
         User user = new User();
         user.setName(name);
@@ -178,13 +185,20 @@ public class UserFactory {
         });
     }
 
+    /**
+     * 好友添加
+     * @param origin 发起者
+     * @param target 被添加的人
+     * @param alias 备注名
+     * @return
+     */
     public static User follow(final User origin, final User target, final String alias) {
         UserFollow userFollow = getUserFollow(origin, target);
         if (userFollow != null){
             return userFollow.getTarget();
         }
         return Hib.query(session -> {
-            // 想要操作懒加载的数据，需要重新load一次
+            // 操作懒加载的数据，需要重新load一次
             session.load(origin, origin.getId());
             session.load(target, target.getId());
 
@@ -210,7 +224,7 @@ public class UserFactory {
     }
 
     /**
-     * 查询两个人是否已经关注
+     * 查询两个人是否已经是好友关系
      *
      * @param origin 发起者
      * @param target 被关注人

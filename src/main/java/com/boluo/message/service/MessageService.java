@@ -64,7 +64,7 @@ public class MessageService extends BaseService {
         Message message = MessageFactory.add(sender, group, model);
         return buildAndPushResponse(sender, message);
     }
-
+    // 推送并构建一个返回信息
     private ResponseModel<MessageCard> buildAndPushResponse(User sender, Message message) {
         if (message == null){
             return ResponseModel.buildCreateError(ResponseModel.ERROR_CREATE_MESSAGE);

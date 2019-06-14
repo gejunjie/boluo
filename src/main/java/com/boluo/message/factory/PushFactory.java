@@ -64,8 +64,8 @@ public class PushFactory {
                     session.saveOrUpdate(history);
                 }
             });
-            dispatcher.submit();
         }
+        dispatcher.submit();
     }
     /**
      * 给群成员构建一个消息，
