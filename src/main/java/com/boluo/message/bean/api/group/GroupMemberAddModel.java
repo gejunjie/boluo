@@ -1,7 +1,5 @@
 package com.boluo.message.bean.api.group;
 
-import com.boluo.message.bean.db.User;
-import com.google.common.base.Strings;
 import com.google.gson.annotations.Expose;
 
 import java.util.HashSet;
@@ -10,13 +8,13 @@ import java.util.Set;
 public class GroupMemberAddModel {
 
     @Expose
-    private Set<User> users = new HashSet<>();
+    private Set<String> users = new HashSet<>();
 
-    public Set<User> getUsers() {
+    public Set<String> getUsers() {
         return users;
     }
 
-    public void setUsers(Set<User> users) {
+    public void setUsers(Set<String> users) {
         this.users = users;
     }
 

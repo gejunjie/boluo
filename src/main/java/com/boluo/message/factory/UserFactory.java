@@ -176,12 +176,18 @@ public class UserFactory {
      * @return
      */
     public static List<User> contacts(User self) {
+
         return Hib.query(session -> {
+            // 重新加载一次用户信息到self中，和当前的session绑定
             session.load(self, self.getId());
-            Set<UserFollow> follows = self.getFollowers();
-            return follows.stream()
+
+            // 获取我关注的人
+            Set<UserFollow> flows = self.getFollowing();
+
+            return flows.stream()
                     .map(UserFollow::getTarget)
                     .collect(Collectors.toList());
+
         });
     }
 

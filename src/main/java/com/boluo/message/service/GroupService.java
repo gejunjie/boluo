@@ -2,7 +2,11 @@ package com.boluo.message.service;
 
 import com.boluo.message.bean.api.base.ResponseModel;
 import com.boluo.message.bean.api.group.GroupCreateModel;
+import com.boluo.message.bean.api.group.GroupMemberAddModel;
+import com.boluo.message.bean.api.group.GroupMemberUpdateModel;
+import com.boluo.message.bean.card.ApplyCard;
 import com.boluo.message.bean.card.GroupCard;
+import com.boluo.message.bean.card.GroupMemberCard;
 import com.boluo.message.bean.db.Group;
 import com.boluo.message.bean.db.GroupMember;
 import com.boluo.message.bean.db.User;
@@ -23,7 +27,11 @@ import java.util.stream.Collectors;
 
 @Path("/group")
 public class GroupService extends BaseService {
-
+    /**
+     * 创建群
+     * @param model
+     * @return
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -137,4 +145,182 @@ public class GroupService extends BaseService {
                 .collect(Collectors.toList());
         return ResponseModel.buildOk(groupCards);
     }
+
+    /**
+     * 获取一个群的信息
+     *
+     * @param id 群的Id
+     * @return 群的信息
+     */
+    @GET
+    @Path("/{groupId}")
+    //http:.../api/group/0000-0000-0000-0000
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<GroupCard> getGroup(@PathParam("groupId") String id) {
+        if (Strings.isNullOrEmpty(id))
+            return ResponseModel.buildParameterError();
+
+        User self = getSelf();
+        GroupMember member = GroupFactory.getMember(self.getId(), id);
+        if (member == null) {
+            return ResponseModel.buildNotFoundGroupError(null);
+        }
+        return ResponseModel.buildOk(new GroupCard(member));
+    }
+
+    /**
+     * 拉取一个群的所有成员
+     *
+     * @param groupId 群id
+     * @return 成员列表
+     */
+    @GET
+    @Path("/{groupId}/member")
+    //http:.../api/group/0000-0000-0000-0000/member
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<List<GroupMemberCard>> members(@PathParam("groupId") String groupId) {
+        User self = getSelf();
+
+        // 没有这个群
+        Group group = GroupFactory.findById(groupId);
+        if (group == null)
+            return ResponseModel.buildNotFoundGroupError(null);
+
+        // 检查权限
+        GroupMember selfMember = GroupFactory.getMember(self.getId(), groupId);
+        if (selfMember == null)
+            return ResponseModel.buildNoPermissionError();
+
+        // 所有的成员
+        Set<GroupMember> members = GroupFactory.getMembers(group);
+        if (members == null)
+            return ResponseModel.buildServiceError();
+
+        // 返回
+        List<GroupMemberCard> memberCards = members
+                .stream()
+                .map(GroupMemberCard::new)
+                .collect(Collectors.toList());
+
+        return ResponseModel.buildOk(memberCards);
+    }
+
+    /**
+     * 给群添加成员的接口
+     *
+     * @param groupId 群Id，你必须是这个群的管理者之一
+     * @param model   添加成员的Model
+     * @return 添加成员列表
+     */
+    @POST
+    @Path("/{groupId}/member")
+    //http:.../api/group/0000-0000-0000-0000/member
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<List<GroupMemberCard>> memberAdd(@PathParam("groupId") String groupId, GroupMemberAddModel model) {
+        if (Strings.isNullOrEmpty(groupId) || !GroupMemberAddModel.check(model))
+            return ResponseModel.buildParameterError();
+
+        // 拿到我的信息
+        User self = getSelf();
+
+        // 移除我之后再进行判断数量
+        model.getUsers().remove(self.getId());
+        if (model.getUsers().size() == 0)
+            return ResponseModel.buildParameterError();
+
+        // 没有这个群
+        Group group = GroupFactory.findById(groupId);
+        if (group == null)
+            return ResponseModel.buildNotFoundGroupError(null);
+
+        // 我必须是成员, 同时是管理员及其以上级别
+        GroupMember selfMember = GroupFactory.getMember(self.getId(), groupId);
+        if (selfMember == null || selfMember.getPermissionType() == GroupMember.PERMISSION_TYPE_NONE)
+            return ResponseModel.buildNoPermissionError();
+
+
+        // 已有的成员
+        Set<GroupMember> oldMembers = GroupFactory.getMembers(group);
+        Set<String> oldMemberUserIds = oldMembers.stream()
+                .map(GroupMember::getUserId)
+                .collect(Collectors.toSet());
+
+
+        List<User> insertUsers = new ArrayList<>();
+        for (String s : model.getUsers()) {
+            // 找人
+            User user = UserFactory.findById(s);
+            if (user == null)
+                continue;
+            // 已经在群里了
+            if(oldMemberUserIds.contains(user.getId()))
+                continue;
+
+            insertUsers.add(user);
+        }
+        // 没有一个新增的成员
+        if (insertUsers.size() == 0) {
+            return ResponseModel.buildParameterError();
+        }
+
+        // 进行添加操作
+        Set<GroupMember> insertMembers =  GroupFactory.addMembers(group, insertUsers);
+        if(insertMembers==null)
+            return ResponseModel.buildServiceError();
+
+
+        // 转换
+        List<GroupMemberCard> insertCards = insertMembers.stream()
+                .map(GroupMemberCard::new)
+                .collect(Collectors.toList());
+
+        // 通知
+        // 1.通知新增的成员被加入了XXX群
+        PushFactory.pushJoinGroup(insertMembers);
+
+        // 2.通知群中老的成员，有XXX，XXX加入群
+        PushFactory.pushGroupMemberAdd(oldMembers, insertCards);
+
+        return ResponseModel.buildOk(insertCards);
+    }
+
+
+    /**
+     * 更改成员信息，请求的人要么是管理员，要么就是成员本人
+     *
+     * @param memberId 成员Id，可以查询对应的群，和人
+     * @param model    修改的Model
+     * @return 当前成员的信息
+     */
+    @PUT
+    @Path("/member/{memberId}")
+    //http:.../api/group/member/0000-0000-0000-0000
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<GroupMemberCard> modifyMember(@PathParam("memberId") String memberId, GroupMemberUpdateModel model) {
+        return null;
+    }
+
+
+    /**
+     * 申请加入一个群，
+     * 此时会创建一个加入的申请，并写入表；然后会给管理员发送消息
+     * 管理员同意，其实就是调用添加成员的接口把对应的用户添加进去
+     *
+     * @param groupId 群Id
+     * @return 申请的信息
+     */
+    @POST
+    @Path("/applyJoin/{groupId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public ResponseModel<ApplyCard> join(@PathParam("groupId") String groupId) {
+        return null;
+    }
+
+
+
 }
