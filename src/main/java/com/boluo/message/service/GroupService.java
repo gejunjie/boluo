@@ -321,6 +321,4 @@ public class GroupService extends BaseService {
         return null;
     }
 
-
-
 }

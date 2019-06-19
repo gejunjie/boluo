@@ -33,7 +33,7 @@ public class MessageService extends BaseService {
         if (message != null){
             return ResponseModel.buildOk(new MessageCard(message));
         }
-        if (model.getType() == Message.RECEIVER_TYPE_GROUP){
+        if (model.getReceiverType() == Message.RECEIVER_TYPE_GROUP){
             return pushToGroup(self, model);
         } else {
             return pushToUser(self, model);
