@@ -5,8 +5,8 @@ import com.boluo.message.bean.api.account.LoginModel;
 import com.boluo.message.bean.api.account.RegisterModel;
 import com.boluo.message.bean.api.base.ResponseModel;
 import com.boluo.message.bean.db.User;
-import com.google.common.base.Strings;
 import com.boluo.message.factory.UserFactory;
+import com.google.common.base.Strings;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -21,18 +21,15 @@ public class AccountService extends BaseService {
     @Produces(MediaType.APPLICATION_JSON)
     public ResponseModel<AccountRspModel> login(LoginModel model) {
         if (!LoginModel.check(model)) {
-            // 返回参数异常
             return ResponseModel.buildParameterError();
         }
 
         User user = UserFactory.login(model.getAccount(), model.getPassword());
         if (user != null) {
-
             // 如果有携带PushId
             if (!Strings.isNullOrEmpty(model.getPushId())) {
                 return bind(user, model.getPushId());
             }
-
             // 返回当前的账户
             AccountRspModel rspModel = new AccountRspModel(user);
             return ResponseModel.buildOk(rspModel);
@@ -41,6 +38,28 @@ public class AccountService extends BaseService {
             return ResponseModel.buildLoginError();
         }
     }
+
+//    // 退出登录
+//    @POST
+//    @Path("/logout")
+//    // 指定请求与返回的相应体为JSON
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    public ResponseModel<AccountRspModel> logout(LogoutModel model) {
+//        if (!LogoutModel.check(model)) {
+//            return ResponseModel.buildParameterError();
+//        }
+//
+//        User user = UserFactory.logout(model.getAccount());
+//        if (user != null) {
+//            // 返回当前的账户
+//            AccountRspModel rspModel = new AccountRspModel(user);
+//            return ResponseModel.buildOk(rspModel);
+//        } else {
+//            // 登录失败
+//            return ResponseModel.buildParameterError();
+//        }
+//    }
     // 注册
 //    {
 //        "account" : "1111",

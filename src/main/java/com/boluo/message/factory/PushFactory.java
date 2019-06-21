@@ -172,8 +172,6 @@ public class PushFactory {
                 session.saveOrUpdate(history);
             }
         });
-
-        // 提交发送
         dispatcher.submit();
     }
 

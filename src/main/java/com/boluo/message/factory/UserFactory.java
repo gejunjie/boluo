@@ -59,6 +59,15 @@ public class UserFactory {
         return user;
     }
 
+    public static User logout(String account){
+        final String accountStr = account.trim();
+        User user = findByPhone(accountStr);
+        if (user != null){
+            user = login(user);
+        }
+        return user;
+    }
+
     /**
      * 用户注册
      * 注册的操作需要写入数据库，并返回数据库中的User信息
@@ -146,6 +155,11 @@ public class UserFactory {
         user.setToken(newToken);
         return update(user);
     }
+
+//    public static User logout(User user){
+//        user.setToken("");
+//        return update(user);
+//    }
 
     public static User update(User user){
         return Hib.query(session -> {
@@ -251,10 +265,12 @@ public class UserFactory {
      * @param name
      * @return
      */
+    @SuppressWarnings("unchecked")
     public static List<User> search(String name) {
         if (Strings.isNullOrEmpty(name)) name = "";
         final String searchName = "%" + name + "%";
-        return Hib.query(session -> (List<User>) session.createQuery("from User where lower(name) like :name and portrait is not null and description is not null")
+        return Hib.query(session -> (List<User>) session.createQuery(
+                "from User where lower(name) like :name and portrait is not null and description is not null")
                 .setParameter("name", searchName)
                 .setMaxResults(20) // 至多20条
                 .list());

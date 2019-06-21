@@ -22,7 +22,7 @@ public class User implements Principal {
     @GeneratedValue(generator = "uuid")
     // 把uuid的生成器定义为uuid2，uuid2是常规的UUID toString
     @GenericGenerator(name = "uuid", strategy = "uuid2")
-    // 不允许更改，不允许为null
+
     @Column(updatable = false, nullable = false)
     private String id;
 
@@ -44,7 +44,6 @@ public class User implements Principal {
     @Column
     private String description;
 
-    // 性别有初始值，所有不为空
     @Column(nullable = false)
     private int sex = 0;
 
@@ -97,7 +96,6 @@ public class User implements Principal {
     // FetchType.LAZY：懒加载，加载用户信息时不加载这个集合
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Group> groups = new HashSet<>();
-
 
     public String getId() {
         return id;
