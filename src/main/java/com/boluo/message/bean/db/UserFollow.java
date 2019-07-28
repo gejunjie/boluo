@@ -20,20 +20,24 @@ public class UserFollow {
     @Column(updatable = false, nullable = false)
     private String id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "originId")
-    private User origin;
-
+//---------------------------------
     @Column(nullable = false, updatable = false, insertable = false)
     private String originId;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "targetId")
-    private User target;
 
     @Column(nullable = false, updatable = false, insertable = false)
     private String targetId;
 
+    //关注的发起者
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "originId")//定义关联的表字段名为originId，对应User.id
+    private User origin;
+
+    //被关注的人
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "targetId")
+    private User target;
+//---------------------------------
+    //别名，是对target的备注
     @Column
     private String alias;
 
